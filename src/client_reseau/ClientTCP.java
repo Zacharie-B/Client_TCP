@@ -24,11 +24,10 @@ public class ClientTCP extends ProtocoleClient{
 	
     public static void main (String argv []) throws IOException, InterruptedException {
     	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
-    	boolean beginning = false ;
         Socket socket = null ;
         PrintWriter flux_sortie = null ;
         BufferedReader flux_entree = null ;
-        String chaine = "";
+        String userCommand = "";
         FenetrePrincipal fenetreprincipal = null;
 		boolean put_product = false;
         
@@ -66,87 +65,67 @@ public class ClientTCP extends ProtocoleClient{
 	         * boucle permettant de lancer le protocole applicatif côté client
 	         */
 	    	do {
-	    		BufferedReader entree_standard = new BufferedReader ( new InputStreamReader ( System.in)) ;
-	    		/*
-	    		 *  on commence le protocole applicatif par un message test de commmunication
-	    		 */
-	    		if(!beginning) {
-	    			chaine = BeginningDialog(flux_sortie, flux_entree);
-	    			if(chaine!=null) {
-	    				beginning = true;
-	    			}
-	    		}
+	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader ( System.in)) ;
 	    		/*
 	    		 * si la fenêtre pour insérer des produits est ouverte
 	    		 */
-    			else if(put_product) {
+    			if(put_product) {
     				/*
     				 * on insère les produits dans la BD si l'utilisateur à appuyer sur le bouton "Ajouter produit"
     				 */
     				if(FenetrePrincipal.enregistrer) {
-    					chaine = SendProduct(flux_sortie, flux_entree);
+    					userCommand = SendProduct(flux_sortie, flux_entree);
     					put_product = fenetreprincipal.isShowing();
-    				}
-    				/*
-    				 * ou on envoie un message par défaut chaque seconde,
-    				 * le temps que l"utilisateur nous donnent les données de ce produit
-    				 */
-    				else {
-    					chaine = "to be continued";
-	    				put_product = fenetreprincipal.isShowing();
     				}
     			}
 	    		/*
 	    		 * si la fenêtre est fermée
 	    		 */
     			else {
-    				/*
-    				 * on attends que l'utilisateur tape quelque chose dans la console
-    				 */
-    				if((chaine = entree_standard.readLine()) != null){
+    				if((userCommand = entree_standard.readLine()) != null){
     					/*
     					 * on ouvre la fenêtre pour insérer les produits si l'utilisateur écrit "Ouvrir GUI"
     					 */
-    	    			if(chaine.equals("Ouvrir GUI")) {
+    	    			if(userCommand.equals("Ouvrir GUI")) {
     	    				fenetreprincipal = new FenetrePrincipal();
     	    				put_product = fenetreprincipal.isShowing();
     	    			}
     	    			/*
     	    			 * ou on se déconnecte du serveur si il écrit "Salut"
     	    			 */
-    	    			else if (chaine.equals("Salut")) {
-    	    				EndingDialog(flux_sortie, flux_entree, chaine);
+    	    			else if (userCommand.equals("Salut")) {
+    	    				EndingDialog(flux_sortie, flux_entree, userCommand);
     	    				System.out.println("je me suis deconnecté du serveur");
     	    				break;
     	    			}
     	    			/*
     	    			 * on envoie un message par défaut au serveur lorsqu'il écrit autre chose
     	    			 */
-    	    			else if (chaine.equals("Test ordre paquet")){
-    	    				chaine = TooLongMessage(flux_sortie, flux_entree);
+    	    			else if (userCommand.equals("Test ordre paquet")){
+    	    				userCommand = TooLongMessage(flux_sortie, flux_entree);
     	    			}
     	    			/*
     	    			 * Test pour gestion de la lenteur de renvoi de message par le serveur
     	    			 */
-    	    			else if(chaine.equals("Lenteur serveur")) {
+    	    			else if(userCommand.equals("Lenteur serveur")) {
     	    				socket.setSoTimeout(3000);
     	    				ResponseTooSlow(flux_sortie, flux_entree, socket);
     	    			}
     	    			/*
     	    			 * Test pour gestion de la lenteur de renvoi de message par le client
     	    			 */
-    	    			else if (chaine.equals("Lenteur client")) {
+    	    			else if (userCommand.equals("Lenteur client")) {
     	    				ResponseVerySlow(flux_sortie, flux_entree, socket);
     	    			}
     	    			/*
     	    			 * on envoie un message qui ne respecte pas le protocole applicatif
     	    			 */
     	    			else {
-    	    				chaine = MessageToReject(flux_sortie,flux_entree,chaine);
+    	    				userCommand = MessageToReject(flux_sortie,flux_entree,userCommand);
     	    			}
     				}
     			}
-	        } while (chaine != null);
+	        } while (userCommand != null);
     	}
         catch (SocketException e) {
         	String socket_error = "Le serveur s'est brutalement déconnecté.\n";

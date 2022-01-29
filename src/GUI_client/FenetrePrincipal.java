@@ -433,7 +433,7 @@ public class FenetrePrincipal extends JFrame{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if(infoproducttoput.VerifFullField()) {
+			if(infoproducttoput.infoProductHasGoodFormat()) {
 				AddElementText(textNomProduit,"nom_produit");
 				AddElementText(textCoutProduit,"cout_produit");
 				AddElementText(textTypeProduit,"type_produit");
@@ -454,7 +454,7 @@ public class FenetrePrincipal extends JFrame{
 				AddElementButton(buttonRadio_Ordinateur,"categorie");
 				AddElementButton(buttonRadio_PeripheriqueBasique,"categorie");
 				AddElementButton(buttonRadio_PeripheriqueAudio,"categorie");
-				enregistrer =true;
+				enregistrer = true;
 			}
 		}
 	}

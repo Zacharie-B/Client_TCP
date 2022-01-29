@@ -19,21 +19,6 @@ public class ProtocoleClient {
 	protected ProtocoleClient(){
 		
 	}
-
-	/**
-	 * envoie le premier message du dialogue entre le client TCP et le serveur TCP 
-	 * @param flux_sortie
-	 * @param flux_entree
-	 * @return String la réponse du serveur
-	 * @throws IOException
-	 */
-	public static String BeginningDialog(PrintWriter flux_sortie, BufferedReader flux_entree) throws IOException {
-		String chaine = "commencer la communication" ;
-		flux_sortie.println (chaine) ;
-		chaine = flux_entree.readLine () ;
-		System.out.println ("Le serveur m'a repondu : " + chaine) ;
-		return chaine;
-	}
 	
 	/**
 	 * envoie une hashmap avec les caractéristiques d'un produit à rentrer dans la base de données
@@ -43,11 +28,13 @@ public class ProtocoleClient {
 	 * @throws IOException
 	 */
 	public static String SendProduct(PrintWriter flux_sortie, BufferedReader flux_entree) throws IOException {
-		flux_sortie.println ("J'envoi le produit " + products) ;
+		flux_sortie.write(CodesProtocoles.CODE_SEND_NEW_PRODUCT + " " + products);
+		System.out.println(CodesProtocoles.CODE_SEND_NEW_PRODUCT);
+//		flux_sortie.println ("[Client] 0007 " + products);
 		System.out.println(products);
-		String chaine = flux_entree.readLine () ;
-		System.out.println ("Le serveur m'a repondu : " + chaine) ;
-		FenetrePrincipal.enregistrer = false ;
+		String chaine = flux_entree.readLine();
+		System.out.println ("[Serveur] : " + chaine);
+		FenetrePrincipal.enregistrer = false;
 		return chaine;
 	}
 	
@@ -61,7 +48,7 @@ public class ProtocoleClient {
 	public static void EndingDialog(PrintWriter flux_sortie, BufferedReader flux_entree, String chaine) throws IOException {
 		flux_sortie.println (chaine) ;
 		chaine = flux_entree.readLine () ;
-		System.out.println ("Le serveur m'a repondu : " + chaine) ;
+		System.out.println ("[Serveur] : " + chaine) ;
 
 	}
 	
@@ -75,10 +62,10 @@ public class ProtocoleClient {
 	public static String TooLongMessage(PrintWriter flux_sortie, BufferedReader flux_entree) throws IOException {
 		String chaine ="";
 		for(int i=0;i<3;i++) {
-			flux_sortie.println ("message n° "+i) ;
+			flux_sortie.println ("[Client] : message n° "+i) ;
 			chaine += "\n"+flux_entree.readLine () ;
 		}
-		System.out.println ("Le serveur m'a repondu : " + chaine) ;
+		System.out.println ("[Serveur] : " + chaine) ;
 		return chaine;
 	}
 	
