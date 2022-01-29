@@ -1,14 +1,14 @@
 package client_reseau;
 
-import java.io.IOException ;
-import java.io.BufferedReader ;
-import java.io.InputStreamReader ;
-import java.io.PrintWriter ;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ConnectException;
-import java.net.Socket ;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.UnknownHostException ;
+import java.net.UnknownHostException;
 
 import org.apache.log4j.Logger;
 
@@ -17,45 +17,46 @@ import log.LoggerUtility;
 
 /**
  * classe permmettant d'assurer le rôle de client TCP qui communique avec le serveur TCP
+ * 
  * @author Zacharie
- *
  */
-public class ClientTCP extends ProtocoleClient{
-	
-    public static void main (String argv []) throws IOException, InterruptedException {
+public class ClientTCP extends ProtocoleClient {
+
+	public static void main (String argv []) throws IOException, InterruptedException {
     	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
-        Socket socket = null ;
-        PrintWriter flux_sortie = null ;
-        BufferedReader flux_entree = null ;
+        Socket socket = null;
+        PrintWriter flux_sortie = null;
+        BufferedReader flux_entree = null;
         String userCommand = "";
         FenetrePrincipal fenetreprincipal = null;
 		boolean put_product = false;
+		int portNumber = 5000;
         
         /**
          * connexion avec le serveur réseau
          */
         try {
             // deuxieme argument : le numero de port que l'on contacte
-            socket = new Socket (argv[0], Integer.valueOf(argv [1])) ;
-            flux_sortie = new PrintWriter (socket.getOutputStream (), true) ;
+        	if(argv[1] != null)
+        		portNumber = Integer.valueOf(argv[1]);
+        	socket = new Socket (argv[0], portNumber);
+            flux_sortie = new PrintWriter (socket.getOutputStream (), true);
             flux_entree = new BufferedReader (new InputStreamReader (
                                         socket.getInputStream ()));
-            String ip = socket.getInetAddress().toString();
-            String ip_client = ip.substring(1);
-            int port_number= socket.getPort();
+            String ip = socket.getInetAddress().getHostAddress();
             NetworkPing networkPing = new NetworkPing(socket.getInetAddress());
             networkPing.pingServer();
             
             logger.info("Bienvenue dans notre client TCP");
-            logger.info("Je suis connecté au serveur d'adresse IP "+ip_client);
-            logger.info("Il m'écoute sur le port numéro " + port_number +"\n");
+            logger.info("Je suis connecté au serveur d'adresse IP " + ip);
+            logger.info("Il m'écoute sur le port numéro " + portNumber  +"\n");
         }
-        catch (UnknownHostException e ) {
+        catch (UnknownHostException e) {
             System.err.println ("Hote inconnu.") ;
-            System.exit (1) ;
+            System.exit (1);
         } 
         catch (ConnectException ce) {
-        	System.err.println("La connexion n'a pas pu être établit sur le port " + argv[1] +".");
+        	System.err.println("La connexion n'a pas pu être établit sur le port " + portNumber  + ".");
         	System.out.println("Soit vous n'utilisez pas le bon port, soit le serveur recherché n'est pas démarré");
         	System.exit(1);
         }
@@ -65,7 +66,7 @@ public class ClientTCP extends ProtocoleClient{
 	         * boucle permettant de lancer le protocole applicatif côté client
 	         */
 	    	do {
-	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader ( System.in)) ;
+	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader(System.in)) ;
 	    		/*
 	    		 * si la fenêtre pour insérer des produits est ouverte
 	    		 */
@@ -94,15 +95,15 @@ public class ClientTCP extends ProtocoleClient{
     	    			 * ou on se déconnecte du serveur si il écrit "Salut"
     	    			 */
     	    			else if (userCommand.equals("Salut")) {
-    	    				EndingDialog(flux_sortie, flux_entree, userCommand);
+    	    				EndingDialog(flux_sortie, flux_entree);
     	    				System.out.println("je me suis deconnecté du serveur");
     	    				break;
     	    			}
     	    			/*
     	    			 * on envoie un message par défaut au serveur lorsqu'il écrit autre chose
     	    			 */
-    	    			else if (userCommand.equals("Test ordre paquet")){
-    	    				userCommand = TooLongMessage(flux_sortie, flux_entree);
+    	    			else if (userCommand.equals("Test dépassement de buffer")){
+    	    				SendBufferOverFlow(flux_sortie, flux_entree, userCommand);
     	    			}
     	    			/*
     	    			 * Test pour gestion de la lenteur de renvoi de message par le serveur
@@ -110,12 +111,6 @@ public class ClientTCP extends ProtocoleClient{
     	    			else if(userCommand.equals("Lenteur serveur")) {
     	    				socket.setSoTimeout(3000);
     	    				ResponseTooSlow(flux_sortie, flux_entree, socket);
-    	    			}
-    	    			/*
-    	    			 * Test pour gestion de la lenteur de renvoi de message par le client
-    	    			 */
-    	    			else if (userCommand.equals("Lenteur client")) {
-    	    				ResponseVerySlow(flux_sortie, flux_entree, socket);
     	    			}
     	    			/*
     	    			 * on envoie un message qui ne respecte pas le protocole applicatif
@@ -140,5 +135,5 @@ public class ClientTCP extends ProtocoleClient{
 	    flux_entree.close() ;
 	    socket.close() ;
     }
-        
+
 }
