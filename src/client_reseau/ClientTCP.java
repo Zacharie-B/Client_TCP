@@ -40,13 +40,16 @@ public class ClientTCP extends ProtocoleClient{
             socket = new Socket (argv[0], Integer.valueOf(argv [1])) ;
             flux_sortie = new PrintWriter (socket.getOutputStream (), true) ;
             flux_entree = new BufferedReader (new InputStreamReader (
-                                        socket.getInputStream ())) ;
+                                        socket.getInputStream ()));
             String ip = socket.getInetAddress().toString();
             String ip_client = ip.substring(1);
             int port_number= socket.getPort();
+            NetworkPing networkPing = new NetworkPing(socket.getInetAddress());
+            networkPing.pingServer();
+            
             logger.info("Bienvenue dans notre client TCP");
             logger.info("Je suis connecté au serveur d'adresse IP "+ip_client);
-            logger.info("Il m'écoute sur le port numéro "+port_number +"\n");
+            logger.info("Il m'écoute sur le port numéro " + port_number +"\n");
         }
         catch (UnknownHostException e ) {
             System.err.println ("Hote inconnu.") ;
