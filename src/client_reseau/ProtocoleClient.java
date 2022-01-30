@@ -13,11 +13,13 @@ import GUI_client.FenetrePrincipal;
  * 
  * @author Zacharie
  */
-public class ProtocoleClient {
+public class ProtocoleClient implements Runnable {
 	public static HashMap<String, String> products = new HashMap<String, String>();
+	protected static PrintWriter flux_sortie;
+	protected static BufferedReader flux_entree;
 
 	protected ProtocoleClient() {
-
+		
 	}
 
 	/**
@@ -28,33 +30,31 @@ public class ProtocoleClient {
 	 * @return String la réponse du serveur
 	 * @throws IOException
 	 */
-	public static String SendProduct(PrintWriter flux_sortie, BufferedReader flux_entree)
+	public String SendProduct(PrintWriter flux_sortie, BufferedReader flux_entree)
 			throws IOException {
-		flux_sortie.write(CodesProtocoles.CODE_SEND_NEW_PRODUCT + "  " + products);
+		flux_sortie.write(CodesProtocoles.CODE_SEND_NEW_PRODUCT + " " + products);
 		System.out.println(CodesProtocoles.CODE_SEND_NEW_PRODUCT);
-//		flux_sortie.println ("[Client] 0007 " + products);
 		System.out.println(products);
 		String chaine = flux_entree.readLine();
-		System.out.println("[Serveur] : " + chaine);
+		System.out.println("[Client] Réponse du serveur : " + chaine);
 		FenetrePrincipal.enregistrer = false;
 		return chaine;
 	}
 
 	/**
-	 * lit le message d'un utilisateur et si il tape "Salut !", le clent TCP se déconnecte du
-	 * serveur TCP
+	 * lit le message d'un utilisateur et si il tape "Salut", le clent TCP se déconnecte du serveur
+	 * TCP
 	 * 
 	 * @param flux_sortie
 	 * @param flux_entree
 	 * @return String la réponse du serveur
 	 * @throws IOException
 	 */
-	public static void EndingDialog(PrintWriter flux_sortie, BufferedReader flux_entree)
+	public void EndingDialog(PrintWriter flux_sortie, BufferedReader flux_entree)
 			throws IOException {
 		flux_sortie.println(CodesProtocoles.QUIT_APP + " ");
 		String chaine = flux_entree.readLine();
-		System.out.println("[Serveur] : " + chaine);
-
+		System.out.println("[Client] Réponse du serveur : " + chaine);
 	}
 
 	/**
@@ -66,11 +66,10 @@ public class ProtocoleClient {
 	 * @return String la réponse du serveur
 	 * @throws IOException
 	 */
-	public static String MessageToReject(PrintWriter flux_sortie, BufferedReader flux_entree,
+	public String MessageToReject(PrintWriter flux_sortie, BufferedReader flux_entree,
 			String chaine_entree) throws IOException {
 		flux_sortie.println(chaine_entree);
 		String chaine = flux_entree.readLine();
-		System.out.println(chaine);
 		return chaine;
 	}
 
@@ -82,26 +81,56 @@ public class ProtocoleClient {
 	 * @param socket
 	 * @throws IOException
 	 */
-	public static void ResponseTooSlow(PrintWriter flux_sortie, BufferedReader flux_entree,
-			Socket socket) throws IOException {
-		flux_sortie.println("vous me recevez ?");
-		String chaine = flux_entree.readLine();
-		System.out.println(chaine);
+	public void ResponseTooSlow(PrintWriter flux_sortie, BufferedReader flux_entree,
+			Socket socket) {
+		flux_sortie.println(CodesProtocoles.TEST_LATENCE_SERVER + " ");
+		try {
+			String chaine = flux_entree.readLine();
+			System.out.println(chaine);
+		} catch (IOException ioe) {
+			System.err.println("[Client] Le serveur a répondu trop lentement.");
+		}
 	}
 
-	public static void SendBufferOverFlow(PrintWriter flux_sortie, BufferedReader flux_entree,
+	public void SendBufferOverFlow(PrintWriter flux_sortie, BufferedReader flux_entree,
 			String chaine_entree) {
-		Double[] bof = new Double[12500];
-		for (int i = 0; i < 12500; i++) {
-			bof[i] = 404.404;
+		String a = "Error 404 ";
+		StringBuilder bof = new StringBuilder();
+		for (int i = 0; i < 10000; i++) {
+			bof.append(a);
 		}
 		try {
 			System.out.println("Envoie d'un paquet de 100 000 octets");
-			flux_sortie.println("0x3001 " + bof);
+			flux_sortie.println(CodesProtocoles.TEST_BUFFER_OVERFLOW + " " + bof.toString());
 			chaine_entree = flux_entree.readLine();
 			System.out.println(chaine_entree);
 		} catch (IOException ioe) {
 			System.err.println("[Client] Le serveur n'a pas répondu ! ");
 		}
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		try {
+			while (true) {
+				Thread.sleep(50000);
+				System.out.println("On garde contact");
+				flux_sortie.println(CodesProtocoles.CHECK_CONNECTION + " ");
+				String chaine = flux_entree.readLine();
+				if (chaine == null) {
+					throw (new IOException());
+				}
+				System.out.println("[Client] Réponse du serveur : " + chaine);
+			}
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.err.println(
+					"[Client] Le serveur ne répond pas à mes messages, je me déconnecte !");
+			System.exit(1);
+		}
+
 	}
 }

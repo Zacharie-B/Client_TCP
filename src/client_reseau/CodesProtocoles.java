@@ -10,6 +10,7 @@ public class CodesProtocoles {
 	
 	public static final int TEST_LATENCE_SERVER = 0x3000;
 	public static final int TEST_BUFFER_OVERFLOW = 0x3001;
+	public static final int CHECK_CONNECTION = 0x3002;
 	
 	public static final int QUIT_APP = 0xF000;
 }

@@ -20,24 +20,23 @@ import log.LoggerUtility;
  * 
  * @author Zacharie
  */
-public class ClientTCP extends ProtocoleClient {
-
+public class ClientTCP extends ProtocoleClient{
+    
 	public static void main (String argv []) throws IOException, InterruptedException {
-    	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
+//    	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
         Socket socket = null;
-        PrintWriter flux_sortie = null;
-        BufferedReader flux_entree = null;
         String userCommand = "";
         FenetrePrincipal fenetreprincipal = null;
 		boolean put_product = false;
 		int portNumber = 5000;
+		ProtocoleClient pc = new ProtocoleClient();
         
         /**
          * connexion avec le serveur réseau
          */
         try {
             // deuxieme argument : le numero de port que l'on contacte
-        	if(argv[1] != null)
+        	if(argv.length >= 2)
         		portNumber = Integer.valueOf(argv[1]);
         	socket = new Socket (argv[0], portNumber);
             flux_sortie = new PrintWriter (socket.getOutputStream (), true);
@@ -47,9 +46,9 @@ public class ClientTCP extends ProtocoleClient {
             NetworkPing networkPing = new NetworkPing(socket.getInetAddress());
             networkPing.pingServer();
             
-            logger.info("Bienvenue dans notre client TCP");
-            logger.info("Je suis connecté au serveur d'adresse IP " + ip);
-            logger.info("Il m'écoute sur le port numéro " + portNumber  +"\n");
+//            logger.info("Bienvenue dans notre client TCP");
+//            logger.info("Je suis connecté au serveur d'adresse IP " + ip);
+//            logger.info("Il m'écoute sur le port numéro " + portNumber  +"\n");
         }
         catch (UnknownHostException e) {
             System.err.println ("Hote inconnu.") ;
@@ -57,25 +56,34 @@ public class ClientTCP extends ProtocoleClient {
         } 
         catch (ConnectException ce) {
         	System.err.println("La connexion n'a pas pu être établit sur le port " + portNumber  + ".");
-        	System.out.println("Soit vous n'utilisez pas le bon port, soit le serveur recherché n'est pas démarré");
+        	System.out.println("Aucun serveur n'écoute sur ce port");
         	System.exit(1);
         }
         
         try {
 	        /**
+	         * On lance le thread qui envoie un message de vérification au serveur toutes les 50 secondes
+	         */
+        	Thread communicationThread = new Thread(pc);
+        	communicationThread.start();
+        	/**
 	         * boucle permettant de lancer le protocole applicatif côté client
 	         */
 	    	do {
-	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader(System.in)) ;
+	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader(System.in));
 	    		/*
 	    		 * si la fenêtre pour insérer des produits est ouverte
 	    		 */
+	    		
     			if(put_product) {
     				/*
     				 * on insère les produits dans la BD si l'utilisateur à appuyer sur le bouton "Ajouter produit"
     				 */
     				if(FenetrePrincipal.enregistrer) {
-    					userCommand = SendProduct(flux_sortie, flux_entree);
+    					userCommand = pc.SendProduct(flux_sortie, flux_entree);
+    					put_product = fenetreprincipal.isShowing();
+    				}
+    				else {
     					put_product = fenetreprincipal.isShowing();
     				}
     			}
@@ -95,7 +103,7 @@ public class ClientTCP extends ProtocoleClient {
     	    			 * ou on se déconnecte du serveur si il écrit "Salut"
     	    			 */
     	    			else if (userCommand.equals("Salut")) {
-    	    				EndingDialog(flux_sortie, flux_entree);
+    	    				pc.EndingDialog(flux_sortie, flux_entree);
     	    				System.out.println("je me suis deconnecté du serveur");
     	    				break;
     	    			}
@@ -103,20 +111,20 @@ public class ClientTCP extends ProtocoleClient {
     	    			 * on envoie un message par défaut au serveur lorsqu'il écrit autre chose
     	    			 */
     	    			else if (userCommand.equals("Test dépassement de buffer")){
-    	    				SendBufferOverFlow(flux_sortie, flux_entree, userCommand);
+    	    				pc.SendBufferOverFlow(flux_sortie, flux_entree, userCommand);
     	    			}
     	    			/*
     	    			 * Test pour gestion de la lenteur de renvoi de message par le serveur
     	    			 */
     	    			else if(userCommand.equals("Lenteur serveur")) {
     	    				socket.setSoTimeout(3000);
-    	    				ResponseTooSlow(flux_sortie, flux_entree, socket);
+    	    				pc.ResponseTooSlow(flux_sortie, flux_entree, socket);
     	    			}
     	    			/*
     	    			 * on envoie un message qui ne respecte pas le protocole applicatif
     	    			 */
     	    			else {
-    	    				userCommand = MessageToReject(flux_sortie,flux_entree,userCommand);
+    	    				userCommand = pc.MessageToReject(flux_sortie,flux_entree,userCommand);
     	    			}
     				}
     			}
@@ -125,15 +133,18 @@ public class ClientTCP extends ProtocoleClient {
         catch (SocketException e) {
         	String socket_error = "Le serveur s'est brutalement déconnecté.\n";
         	System.err.println(socket_error);
-        	logger.info(socket_error);
+//        	logger.info(socket_error);
         }catch (SocketTimeoutException e) {
         	String socket_time_out = "Le serveur a mis trop de temps pour répondre, je me suis déconnecté.\n";
         	System.err.println(socket_time_out);
-        	logger.info(socket_time_out);
+//        	logger.info(socket_time_out);
+        	System.exit(1);
         }
-	    flux_sortie.close() ;
-	    flux_entree.close() ;
-	    socket.close() ;
+	    flux_sortie.close();
+	    flux_entree.close();
+	    socket.close();
     }
+
+	
 
 }
