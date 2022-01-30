@@ -23,7 +23,7 @@ import log.LoggerUtility;
 public class ClientTCP extends ProtocoleClient{
     
 	public static void main (String argv []) throws IOException, InterruptedException {
-//    	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
+    	Logger logger = LoggerUtility.getLogger(ClientTCP.class, "text");
         Socket socket = null;
         String userCommand = "";
         FenetrePrincipal fenetreprincipal = null;
@@ -46,9 +46,9 @@ public class ClientTCP extends ProtocoleClient{
             NetworkPing networkPing = new NetworkPing(socket.getInetAddress());
             networkPing.pingServer();
             
-//            logger.info("Bienvenue dans notre client TCP");
-//            logger.info("Je suis connecté au serveur d'adresse IP " + ip);
-//            logger.info("Il m'écoute sur le port numéro " + portNumber  +"\n");
+            logger.info("Bienvenue dans notre client TCP");
+            logger.info("Je suis connecté au serveur d'adresse IP " + ip);
+            logger.info("Il m'écoute sur le port numéro " + portNumber  +"\n");
         }
         catch (UnknownHostException e) {
             System.err.println ("Hote inconnu.") ;
@@ -70,6 +70,7 @@ public class ClientTCP extends ProtocoleClient{
 	         * boucle permettant de lancer le protocole applicatif côté client
 	         */
 	    	do {
+	    		if(endThread)	System.exit(1);
 	    		BufferedReader entree_standard = new BufferedReader(new InputStreamReader(System.in));
 	    		/*
 	    		 * si la fenêtre pour insérer des produits est ouverte
@@ -104,7 +105,7 @@ public class ClientTCP extends ProtocoleClient{
     	    			 */
     	    			else if (userCommand.equals("Salut")) {
     	    				pc.EndingDialog(flux_sortie, flux_entree);
-    	    				System.out.println("je me suis deconnecté du serveur");
+    	    				System.out.println("Je me suis deconnecté du serveur");
     	    				break;
     	    			}
     	    			/*
@@ -133,11 +134,11 @@ public class ClientTCP extends ProtocoleClient{
         catch (SocketException e) {
         	String socket_error = "Le serveur s'est brutalement déconnecté.\n";
         	System.err.println(socket_error);
-//        	logger.info(socket_error);
+        	logger.info(socket_error);
         }catch (SocketTimeoutException e) {
         	String socket_time_out = "Le serveur a mis trop de temps pour répondre, je me suis déconnecté.\n";
         	System.err.println(socket_time_out);
-//        	logger.info(socket_time_out);
+        	logger.info(socket_time_out);
         	System.exit(1);
         }
 	    flux_sortie.close();

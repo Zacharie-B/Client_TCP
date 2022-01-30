@@ -17,6 +17,7 @@ public class ProtocoleClient implements Runnable {
 	public static HashMap<String, String> products = new HashMap<String, String>();
 	protected static PrintWriter flux_sortie;
 	protected static BufferedReader flux_entree;
+	protected static boolean endThread = false;
 
 	protected ProtocoleClient() {
 		
@@ -94,16 +95,16 @@ public class ProtocoleClient implements Runnable {
 
 	public void SendBufferOverFlow(PrintWriter flux_sortie, BufferedReader flux_entree,
 			String chaine_entree) {
-		String a = "Error 404 ";
+		String a = "Error 404\\r\\n ";
 		StringBuilder bof = new StringBuilder();
-		for (int i = 0; i < 10000; i++) {
+		for (int i = 0; i < 10; i++) {
 			bof.append(a);
 		}
 		try {
-			System.out.println("Envoie d'un paquet de 100 000 octets");
+			System.out.println("[Client] Envoie d'un paquet censé représenté 10 lignes");
 			flux_sortie.println(CodesProtocoles.TEST_BUFFER_OVERFLOW + " " + bof.toString());
 			chaine_entree = flux_entree.readLine();
-			System.out.println(chaine_entree);
+			System.out.println("[Client] " + chaine_entree + " par le serveur.");
 		} catch (IOException ioe) {
 			System.err.println("[Client] Le serveur n'a pas répondu ! ");
 		}
@@ -114,7 +115,7 @@ public class ProtocoleClient implements Runnable {
 		// TODO Auto-generated method stub
 		try {
 			while (true) {
-				Thread.sleep(50000);
+				Thread.sleep(5000);
 				System.out.println("On garde contact");
 				flux_sortie.println(CodesProtocoles.CHECK_CONNECTION + " ");
 				String chaine = flux_entree.readLine();
@@ -129,6 +130,7 @@ public class ProtocoleClient implements Runnable {
 		} catch (IOException e) {
 			System.err.println(
 					"[Client] Le serveur ne répond pas à mes messages, je me déconnecte !");
+			endThread = true;
 			System.exit(1);
 		}
 
